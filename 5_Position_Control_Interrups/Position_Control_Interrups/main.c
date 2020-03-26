@@ -95,7 +95,7 @@ unsigned char Left_white_line = 0;
 unsigned char Center_white_line = 0;
 unsigned char Right_white_line = 0;
 unsigned char THRESHOLD=42;
-
+unsigned char data; //to store received data from UDR1
 //Function to configure ports to enable robot's motion
 void motion_pin_config (void) 
 {
@@ -399,6 +399,22 @@ void velocity (unsigned char left_motor, unsigned char right_motor)
 	OCR5AL = (unsigned char)left_motor;
 	OCR5BL = (unsigned char)right_motor;
 }
+//Function To Initialize UART0
+// desired baud rate:9600
+// actual baud rate:9600 (error 0.0%)
+// char size: 8 bit
+// parity: Disabled
+void uart0_init(void)
+{
+	UCSR0B = 0x00; //disable while setting baud rate
+	UCSR0A = 0x00;
+	UCSR0C = 0x06;
+	UBRR0L = 0x5F; //set baud rate lo
+	UBRR0H = 0x00; //set baud rate hi
+	UCSR0B = 0x98;
+}
+
+
 
 //Function to initialize all the devices
 void init_devices()
@@ -408,6 +424,7 @@ void init_devices()
  timer5_init();
  left_position_encoder_interrupt_init();
  right_position_encoder_interrupt_init();
+ uart0_init();
  sei();   // Enables the global interrupt 
 }
 
@@ -439,7 +456,7 @@ void do_work(unsigned int x){
 			stop();
 		}
 		
-		if(Center_white_line>THRESHOLD)
+		/*if(Center_white_line>THRESHOLD)
 		{
 			flag=1;
 			forward();
@@ -465,6 +482,7 @@ void do_work(unsigned int x){
 			forward();
 			velocity(0,0);
 		}
+		*/
 
 	}
 }
@@ -491,8 +509,8 @@ void returnto_start(unsigned int x)
 		forward();
 		do_work(110);
 	}
-	
 }
+
 
 void goto_table(unsigned int x)
 {
@@ -516,59 +534,59 @@ void goto_table(unsigned int x)
 	do_work(x);
 	//drop item
 	
-	returnto_start(temp);
-	
+	returnto_start(temp);	
+}
+//Main Function
+ISR(USART0_RX_vect) 		// ISR for receive complete interrupt
+{
+	data = UDR0; 				//making copy of data from UDR0 in 'data' variable
+
+	UDR0 = data; 				//echo data back to PC
+
+	if(data == 0x31) //ASCII value of 1
+	{
+		goto_table(1);
+	}
+
+	if(data == 0x32) //ASCII value of 2
+	{
+		goto_table(2);
+	}
+
+	if(data == 0x33) //ASCII value of 3
+	{
+		goto_table(3);
+	}
+
+	if(data == 0x34) //ASCII value of 4
+	{
+		goto_table(4);
+	}
+
+	if(data == 0x35) //ASCII value of 5
+	{
+		goto_table(5);
+	}
+
+	if(data == 0x36) //ASCII value of 6
+	{
+		goto_table(6);
+	}
+
+	if(data == 0x37) //ASCII value of 7
+	{
+		goto_table(7);
+	}
+	if(data == 0x38) //ASCII value of 8
+	{
+		goto_table(8);
+	}
 }
 
-
-//Main Function
 
 int main(void)
 {
 	init_devices();
 
-		forward_mm(200);
-		stop();
-		_delay_ms(1000);
-		left_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		_delay_ms(1000);
-		right_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		stop();
-		right_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		stop();
-		right_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		stop();
-		right_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		stop();
-		left_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		stop();
-		left_degrees(90);
-		stop();
-		_delay_ms(1000);
-		forward_mm(200);
-		_delay_ms(1000);
-		left_degrees(90);
-		_delay_ms(1000);
-		stop();
-		
-		
 		
 }
