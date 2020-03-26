@@ -78,7 +78,7 @@
   http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode
 
 ********************************************************************************/
-
+#define F_CPU 14745600
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -86,7 +86,6 @@
 unsigned long int ShaftCountLeft = 0; //to keep track of left position encoder 
 unsigned long int ShaftCountRight = 0; //to keep track of right position encoder
 unsigned int Degrees; //to accept angle in degrees for turning
-unsigned int temp;
 
 unsigned char ADC_Conversion(unsigned char);
 unsigned char ADC_Value;
@@ -417,20 +416,10 @@ void uart0_init(void)
 
 
 //Function to initialize all the devices
-void init_devices()
-{
- cli(); //Clears the global interrupt
- port_init();  //Initializes all the ports
- timer5_init();
- left_position_encoder_interrupt_init();
- right_position_encoder_interrupt_init();
- uart0_init();
- sei();   // Enables the global interrupt 
-}
+
 
 void do_work(unsigned int x){
 
-	init_devices();
 	float ReqdShaftCount = 0;
 	unsigned long int ReqdShaftCountInt = 0;
 
@@ -442,9 +431,9 @@ void do_work(unsigned int x){
 	while(1)
 	{
 
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+		//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
 		flag=0;
 
@@ -488,50 +477,45 @@ void do_work(unsigned int x){
 }
 void returnto_start(unsigned int x)
 {
-	if(x<=4){
-		x=(5-x)*20;
-		forward();
-		do_work(x);
+	unsigned int distance=x;
+	if(distance<=4){
+		distance=(5-distance)*20;
+		forward_mm(distance);
 		_delay_ms(1000);
 		left_degrees(90);
 		_delay_ms(1000);
-		forward();
-		do_work(80);
+		forward_mm(80);
 	}
 	else
 	{
-		x=5-(x-4);
-		forward();
-		do_work(x*20);
+		distance=5-(distance-4);
+		distance=distance*20;
+		forward_mm(distance);
 		_delay_ms(1000);
 		left_degrees(90);
 		_delay_ms(1000);
-		forward();
-		do_work(110);
+		forward_mm(110);
 	}
 }
 
 
 void goto_table(unsigned int x)
 {
-	temp=x;
+	unsigned int temp=x;
 	if(x<=4)
 	{
-		forward();
-		do_work(30);	
+		forward_mm(30);	
 	}
 	else
 	{
-		forward();
-		do_work(70);
+		forward_mm(70);
 		x=x-4;
 	}
 	_delay_ms(1000);
 	left_degrees(90);
 	_delay_ms(1000);
 	x=x*20;
-	forward();
-	do_work(x);
+	forward_mm(x);
 	//drop item
 	
 	returnto_start(temp);	
@@ -583,10 +567,19 @@ ISR(USART0_RX_vect) 		// ISR for receive complete interrupt
 	}
 }
 
+void init_devices()
+{
+	cli(); //Clears the global interrupt
+	port_init();  //Initializes all the ports
+	uart0_init();
+	timer5_init();
+	left_position_encoder_interrupt_init();
+	right_position_encoder_interrupt_init();
+	sei();   // Enables the global interrupt
+}
 
 int main(void)
 {
 	init_devices();
-
-		
+	while(1);
 }
